@@ -44,11 +44,25 @@ export function createMainWindow(): BrowserWindow {
     console.error("[window] did-fail-load:", code, desc);
   });
 
-  // Phase D0: placeholder. Phase D1 will switch to loadFile(web/out/index.html).
-  const placeholder = path.join(__dirname, "..", "..", "placeholder.html");
-  console.log("[window] loading:", placeholder);
-  window.loadFile(placeholder).catch((err) => {
+  // Phase D1: load the bundled Next.js static export at web/out/index.html.
+  // The renderer takes over routing client-side via Next's <Link> router;
+  // hard-loads of deep paths are caught by the did-fail-load handler below.
+  const webRoot = path.join(__dirname, "..", "..", "web", "out");
+  const entryHtml = path.join(webRoot, "index.html");
+  console.log("[window] loading:", entryHtml);
+  window.loadFile(entryHtml).catch((err) => {
     console.error("[window] loadFile failed:", err);
+  });
+
+  // Deep-link fallback: if Next's client router (or a user reload) tries to
+  // resolve a path that isn't a real on-disk file (e.g. /clients/c_abc/
+  // when only /clients/_/ exists in the bundle), fall back to index.html
+  // and let the client-side router rehydrate from there.
+  window.webContents.on("did-fail-load", (_e, code, _desc, validatedURL) => {
+    if (code === -6 /* ERR_FILE_NOT_FOUND */ && !validatedURL.endsWith("index.html")) {
+      console.warn("[window] deep-link 404, falling back to index.html:", validatedURL);
+      window.loadFile(entryHtml).catch((err) => console.error("[window] fallback failed:", err));
+    }
   });
 
   // Open DevTools in dev for quick iteration; Phase D5 will gate this on a flag
