@@ -60,10 +60,9 @@ export function createMainWindow(): BrowserWindow {
   });
 
 
-  // Open DevTools in dev for quick iteration; Phase D5 will gate this on a flag
-  if (process.env.NODE_ENV === "development") {
-    window.webContents.openDevTools({ mode: "detach" });
-  }
+  // Phase D2: DevTools always open during scaffolding work. Phase D5 will
+  // gate this on app.isPackaged so production users don't see it.
+  window.webContents.openDevTools({ mode: "detach" });
 
   return window;
 }
