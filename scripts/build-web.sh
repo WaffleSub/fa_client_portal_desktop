@@ -18,8 +18,13 @@ echo "[build-web] Source repo: $SOURCE_ABS"
 echo "[build-web] Desktop repo: $DESKTOP_ROOT"
 
 cd "$SOURCE_ABS"
-echo "[build-web] Building static export (FA_PORTAL_BUILD=desktop)…"
-FA_PORTAL_BUILD=desktop npm run build
+echo "[build-web] Building static export (FA_PORTAL_BUILD + NEXT_PUBLIC_FA_PORTAL_BUILD = desktop)…"
+# FA_PORTAL_BUILD          — read by next.config.ts (output: 'export', etc).
+# NEXT_PUBLIC_FA_PORTAL_BUILD — inlined into the client bundle at build time
+#                              so the IS_DESKTOP constant is true in the
+#                              renderer (bypasses Supabase auth, AuthGate,
+#                              /login, /auth/callback).
+FA_PORTAL_BUILD=desktop NEXT_PUBLIC_FA_PORTAL_BUILD=desktop npm run build
 
 if [ ! -d out ]; then
   echo "[build-web] ERROR: source build did not produce out/ — aborting." >&2

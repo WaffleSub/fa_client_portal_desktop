@@ -12,6 +12,11 @@
 import { BrowserWindow } from "electron";
 import path from "node:path";
 
+const APP_ENTRY = "app://local/";
+
+// `path` is imported because the preload script path resolves via it below.
+// Asset URL → file mapping moved to main.ts via protocol.handle("app", ...).
+
 const DEFAULT_WIDTH = 1280;
 const DEFAULT_HEIGHT = 800;
 
@@ -44,26 +49,16 @@ export function createMainWindow(): BrowserWindow {
     console.error("[window] did-fail-load:", code, desc);
   });
 
-  // Phase D1: load the bundled Next.js static export at web/out/index.html.
-  // The renderer takes over routing client-side via Next's <Link> router;
-  // hard-loads of deep paths are caught by the did-fail-load handler below.
-  const webRoot = path.join(__dirname, "..", "..", "web", "out");
-  const entryHtml = path.join(webRoot, "index.html");
-  console.log("[window] loading:", entryHtml);
-  window.loadFile(entryHtml).catch((err) => {
-    console.error("[window] loadFile failed:", err);
+  // Phase D2: load through the custom `app://` protocol registered in main.ts.
+  // The protocol handler maps URL paths to files under web/out/ AND provides
+  // an SPA-style fallback (non-asset, non-existent path → index.html), so
+  // client-side router pushes like `/dashboard/` resolve correctly without
+  // needing a separate did-fail-load fallback.
+  console.log("[window] loading:", APP_ENTRY);
+  window.loadURL(APP_ENTRY).catch((err) => {
+    console.error("[window] loadURL failed:", err);
   });
 
-  // Deep-link fallback: if Next's client router (or a user reload) tries to
-  // resolve a path that isn't a real on-disk file (e.g. /clients/c_abc/
-  // when only /clients/_/ exists in the bundle), fall back to index.html
-  // and let the client-side router rehydrate from there.
-  window.webContents.on("did-fail-load", (_e, code, _desc, validatedURL) => {
-    if (code === -6 /* ERR_FILE_NOT_FOUND */ && !validatedURL.endsWith("index.html")) {
-      console.warn("[window] deep-link 404, falling back to index.html:", validatedURL);
-      window.loadFile(entryHtml).catch((err) => console.error("[window] fallback failed:", err));
-    }
-  });
 
   // Open DevTools in dev for quick iteration; Phase D5 will gate this on a flag
   if (process.env.NODE_ENV === "development") {
