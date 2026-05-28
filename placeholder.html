@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; script-src 'self';" />
+  <title>ACE Wealth Advisory</title>
+  <!-- Placeholder uses Georgia / system serif fallback. Real fonts (Fraunces +
+       Cormorant Garamond) ship inlined under the Next.js bundle in Phase D1. -->
+  <style>
+    :root {
+      --paper: #faf7f1;
+      --ink-deep: #0e1829;
+      --ink-muted: #6b7684;
+      --accent: #8a6d2f;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--paper); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink-deep);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stamp {
+      position: fixed;
+      top: 22px;
+      right: 28px;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .card {
+      max-width: 540px;
+      text-align: center;
+      padding: 40px 30px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .brand-dot {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--ink-deep);
+    }
+    .brand-name {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 18px;
+    }
+    .brand-name b { font-weight: 500; }
+    h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 400;
+      font-size: 38pt;
+      line-height: 1.08;
+      letter-spacing: -0.005em;
+      margin: 0 0 22px;
+    }
+    .rule {
+      width: 80px; height: 2px;
+      background: var(--accent);
+      margin: 0 auto 22px;
+    }
+    p.lede {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-style: italic;
+      font-size: 14pt;
+      color: var(--ink-muted);
+      line-height: 1.45;
+      margin: 0 0 28px;
+    }
+    .build {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="stamp">Phase D0 · Scaffold</div>
+  <div class="card">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">ACE <b>Wealth Advisory</b></span>
+    </div>
+    <h1>Desktop —<br/>scaffold online.</h1>
+    <div class="rule"></div>
+    <p class="lede">Electron shell boots. The Next.js bundle lands in Phase D1.</p>
+    <div class="build">Build · D0 · placeholder.html</div>
+  </div>
+</body>
+</html>
