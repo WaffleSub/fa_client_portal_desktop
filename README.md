@@ -19,12 +19,12 @@ The advisor's book lives in IndexedDB under Electron's `userData/` directory
 `%APPDATA%/ACE Wealth Advisory/` on Windows). No client data crosses the
 network. Only the auto-updater talks to GitHub Releases.
 
-Auth is dropped in the desktop build — the device IS the user. See the
-2026-05-28 entry in `yuki/tasks/lessons.md` for the threat-model reasoning.
+Auth is dropped in the desktop build — the device IS the user. Threat model
+covers wrong-PC, stolen laptop, malware-at-rest, malicious update push,
+and lost device. Network-based exfiltration is not in scope because no
+client data crosses the wire.
 
 ## Phases
-
-Tracked in `yuki/tasks/active.md`:
 
 - **D0** — Scaffold (this commit)
 - **D1** — Static-export spike + bundle web app

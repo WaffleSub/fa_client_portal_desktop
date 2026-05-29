@@ -5,8 +5,8 @@
 # output: "export".
 #
 # Records the source-repo SHA in web/out/.source-sha so the desktop release
-# proves which source commit was bundled (closes the 2026-05-24 dual-file
-# drift failure mode — yuki/tasks/lessons.md).
+# proves which source commit was bundled (closes a dual-file drift failure
+# mode where bundled artifacts diverge silently from their source).
 
 set -euo pipefail
 

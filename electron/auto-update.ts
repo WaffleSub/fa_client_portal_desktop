@@ -11,8 +11,8 @@
  *   ↳ user clicks Restart → quitAndInstall() → relaunch into new version
  *   ↳ user ignores → autoInstallOnAppQuit applies on next Cmd+Q
  *
- * Threat model context (yuki/tasks/lessons.md 2026-05-28):
- *   - The .dmg ships unsigned in MVP (D6 adds Apple Developer ID signing).
+ * Threat model context:
+ *   - The .dmg ships unsigned in MVP (Phase D6 adds Apple Developer ID signing).
  *   - electron-updater verifies HTTPS to api.github.com + the artifact's
  *     blockmap signature. Once D6 is on, it also verifies the new binary's
  *     code signature matches the installed publisher — the actual
