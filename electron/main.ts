@@ -11,10 +11,11 @@
  * network for client data. Only the auto-updater (Phase D5) talks to
  * api.github.com.
  */
-import { app, BrowserWindow, protocol, net } from "electron";
+import { app, BrowserWindow, protocol, net, session, ipcMain } from "electron";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createMainWindow } from "./window";
+import { wireAutoUpdate, installPendingUpdate } from "./auto-update";
 
 // Register the custom `app://` scheme as privileged + standard BEFORE app.ready
 // fires. This is what lets the renderer follow `app:///dashboard/` style links
@@ -124,11 +125,73 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
+/**
+ * Strict CSP applied to every renderer response. Whitelist-only — the
+ * renderer can talk to itself (the app:// origin we registered above)
+ * and that's it. No HTTP, no Supabase, no fonts.googleapis.com.
+ *
+ *   default-src 'self' app:  → the app:// scheme is the only origin
+ *   script-src 'self' 'unsafe-inline' → bundled chunks + Next.js's inline
+ *     hydration bootstraps. 'unsafe-inline' is the accepted pattern for
+ *     Electron desktop apps bundling Next.js static export (VSCode, Slack,
+ *     Discord all do this). The "XSS via injected inline script" threat
+ *     that 'unsafe-inline' normally opens does not apply here:
+ *       - The HTML is bundled at build time — no user-generated HTML
+ *       - The renderer is sandboxed (no Node primitives)
+ *       - default-src 'self' app: blocks any external script origin
+ *     Trade-off accepted; revisit only if we ever render user-generated
+ *     HTML in the renderer.
+ *   style-src 'self' 'unsafe-inline' → styled-jsx + Tailwind inline styles
+ *   img-src 'self' data: blob: → Recharts SVG, data-URI icons
+ *   font-src 'self' data:     → Next/font inlines fonts as data: URIs
+ *   connect-src 'self'        → no XHR / fetch out (auto-updater runs main-side)
+ *   object-src 'none'         → no <object>/<embed>
+ *   base-uri 'self'           → can't redirect script base via <base>
+ *   form-action 'self'        → POSTs stay on origin
+ *
+ * The auto-updater talks to api.github.com from the MAIN process, not the
+ * renderer, so connect-src 'self' is safe.
+ */
+const CSP = [
+  "default-src 'self' app:",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join("; ");
+
+function applyContentSecurityPolicy(): void {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [CSP],
+      },
+    });
+  });
+}
+
 app.whenReady().then(() => {
   // Wire the app:// protocol now that the app is ready
   protocol.handle("app", appProtocolHandler);
 
-  createMainWindow();
+  // Lock down the renderer's network surface
+  applyContentSecurityPolicy();
+
+  const window = createMainWindow();
+
+  // IPC: renderer asks the main process to apply the downloaded update
+  ipcMain.handle("desktop:install-update", () => {
+    installPendingUpdate();
+  });
+
+  // electron-updater — only runs against the GitHub Releases feed when the
+  // app is a packaged binary. No-op in dev. Quiet on errors.
+  wireAutoUpdate(window);
 
   // On mac: re-open a window when the dock icon is clicked and none are open
   app.on("activate", () => {

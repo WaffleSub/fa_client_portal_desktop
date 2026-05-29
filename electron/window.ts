@@ -9,7 +9,7 @@
  * IPC surface (added in Phase D3) goes through a preload script via
  * contextBridge — that's the only way the renderer can call native APIs.
  */
-import { BrowserWindow } from "electron";
+import { app, BrowserWindow } from "electron";
 import path from "node:path";
 
 const APP_ENTRY = "app://local/";
@@ -60,9 +60,12 @@ export function createMainWindow(): BrowserWindow {
   });
 
 
-  // Phase D2: DevTools always open during scaffolding work. Phase D5 will
-  // gate this on app.isPackaged so production users don't see it.
-  window.webContents.openDevTools({ mode: "detach" });
+  // Phase D5: DevTools open in dev only (npm run dev), hidden in the
+  // packaged build. Still reachable in packaged builds via menu / shortcut
+  // for diagnostic purposes (Cmd+Opt+I).
+  if (!app.isPackaged) {
+    window.webContents.openDevTools({ mode: "detach" });
+  }
 
   return window;
 }
