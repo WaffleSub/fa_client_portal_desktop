@@ -53,12 +53,43 @@ npm run tsc
 ## Build & release
 
 ```bash
-# Bundle the web app from ../fa_client_portal/out → web/out (Phase D1+)
+# Bundle the web app from ../fa_client_portal/out → web/out
 npm run build:web
 
-# Compile electron/ → dist/electron + bundle web → produce platform artifacts (Phase D4+)
-npm run build
+# Local release builds (unsigned, MVP tier)
+npm run release:mac   # → release/ACE Wealth Advisory-X.Y.Z-universal.dmg
+npm run release:win   # → release/ACE Wealth Advisory Setup X.Y.Z.exe (Windows runner only)
 ```
+
+## Cutting a release via GitHub Actions
+
+The `.github/workflows/release.yml` workflow builds + publishes for both
+macOS and Windows whenever a `v*` tag is pushed.
+
+**One-time setup:**
+
+1. Create a fine-grained Personal Access Token at
+   [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens):
+   - **Repository access:** `WaffleSub/fa_client_portal` (the source repo)
+   - **Permissions:** *Contents → Read-only*
+2. Add it as a repo secret on this repo named `SOURCE_REPO_PAT`
+   (Settings → Secrets and variables → Actions → New repository secret).
+
+**Cutting a release:**
+
+```bash
+# Bump version + commit + tag in one command
+npm version patch         # 0.0.1 → 0.0.2 (or `minor` / `major`)
+git push --follow-tags
+```
+
+The workflow then runs on both `macos-latest` and `windows-latest`,
+produces the .dmg and .exe, and uploads them to a GitHub Release
+(created as a draft so you can write the release notes before publishing).
+
+**First release:** use `v0.0.2-rc.1` style tags while the pipeline is
+being shaken out, only cut a clean `v0.0.2` once two green runs in a
+row prove it works.
 
 ## Repo layout
 

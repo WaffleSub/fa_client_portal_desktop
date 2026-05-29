@@ -1,0 +1,30 @@
+# CI — runs on every PR and push to main.
+# Fast checks only: tsc + electron compile. Does NOT build the web bundle
+# (that requires the source repo + would slow the loop). The release
+# workflow does the full build.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: Typecheck + compile (macos-latest)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript typecheck + compile electron/
+        run: npm run tsc

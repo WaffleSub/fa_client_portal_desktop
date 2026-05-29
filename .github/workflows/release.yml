@@ -1,0 +1,116 @@
+# Release — matrix-builds .dmg + .exe and uploads to a GitHub Release.
+#
+# Trigger: push a tag matching `v*` (e.g. v0.0.2 or v0.0.2-rc.1).
+# Convention: rc.N tags during pipeline bring-up, clean vX.Y.Z for shippable.
+#
+# Setup required (one-time):
+#   1. Create a fine-grained Personal Access Token at
+#      github.com/settings/personal-access-tokens with:
+#        - Repository access: WaffleSub/fa_client_portal (the source repo)
+#        - Permissions:       Contents → Read-only
+#   2. Add it as a repo secret named `SOURCE_REPO_PAT` on this repo
+#      (Settings → Secrets and variables → Actions → New).
+#   3. Bump version in package.json + commit + tag + push:
+#        npm version patch       # or minor / major / prerelease
+#        git push --follow-tags
+#
+# What it produces:
+#   - release/ACE Wealth Advisory-X.Y.Z-universal.dmg          (macOS)
+#   - release/ACE Wealth Advisory Setup X.Y.Z.exe              (Windows)
+#   - release/latest-mac.yml + latest.yml                       (auto-update metadata)
+#   - GitHub Release published as a DRAFT — review then publish manually.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # required for electron-builder to create the GitHub Release
+
+jobs:
+  build:
+    name: ${{ matrix.os }} build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout fa_client_portal_desktop
+        uses: actions/checkout@v4
+        with:
+          path: desktop
+
+      - name: Checkout fa_client_portal (source)
+        uses: actions/checkout@v4
+        with:
+          repository: WaffleSub/fa_client_portal
+          path: source
+          token: ${{ secrets.SOURCE_REPO_PAT }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies (source)
+        working-directory: source
+        run: npm ci
+
+      - name: Install dependencies (desktop)
+        working-directory: desktop
+        run: npm ci
+
+      - name: Build Next.js static export
+        working-directory: source
+        env:
+          FA_PORTAL_BUILD: desktop
+          NEXT_PUBLIC_FA_PORTAL_BUILD: desktop
+        run: npm run build
+
+      - name: Vendor web/out → desktop repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf desktop/web/out
+          mkdir -p desktop/web
+          cp -r source/out desktop/web/out
+          git -C source rev-parse HEAD > desktop/web/out/.source-sha
+          echo "Bundled source SHA: $(cat desktop/web/out/.source-sha)"
+
+      - name: Compile electron/
+        working-directory: desktop
+        run: npm run build:electron
+
+      - name: electron-builder (macOS — universal .dmg)
+        if: matrix.os == 'macos-latest'
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --mac --publish always
+
+      - name: electron-builder (Windows — NSIS .exe)
+        if: matrix.os == 'windows-latest'
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --win --publish always
+
+      - name: Upload artifact (mac)
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: desktop/release/*.dmg
+          if-no-files-found: error
+
+      - name: Upload artifact (windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: exe
+          path: desktop/release/*.exe
+          if-no-files-found: error
