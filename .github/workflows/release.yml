@@ -103,14 +103,23 @@ jobs:
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: dmg
-          path: desktop/release/*.dmg
+          name: mac-release
+          # Include .yml metadata for the auto-updater — without it
+          # electron-updater can't compare versions. The blockmap is used
+          # for delta updates.
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.dmg.blockmap
+            desktop/release/latest-mac.yml
           if-no-files-found: error
 
       - name: Upload artifact (windows)
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: exe
-          path: desktop/release/*.exe
+          name: windows-release
+          path: |
+            desktop/release/*.exe
+            desktop/release/*.exe.blockmap
+            desktop/release/latest.yml
           if-no-files-found: error
