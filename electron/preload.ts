@@ -16,7 +16,12 @@
 import { contextBridge, ipcRenderer } from "electron";
 
 type UpdateState =
-  | { state: "downloading"; version?: string; percent?: number }
+  | {
+      state: "downloading";
+      version?: string;
+      percent?: number;
+      bytesPerSecond?: number;
+    }
   | { state: "ready"; version: string; releaseNotes: string };
 
 type AppMeta = {

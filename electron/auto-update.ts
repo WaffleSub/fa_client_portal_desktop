@@ -33,17 +33,23 @@ export function wireAutoUpdate(window: BrowserWindow): void {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  // Re-emit each state to the renderer for the in-app banner. The preload
-  // script exposes `window.desktop.onUpdateAvailable()` over these channels.
+  // Re-emit each state to the renderer for the in-app banner. We carry
+  // the version forward across all 'downloading' events (version arrives
+  // in update-available, percent in download-progress — without this
+  // closure they'd clobber each other and the UI would lose track).
+  let currentVersion = "";
+
   autoUpdater.on("checking-for-update", () => {
     console.log("[updater] checking for update");
   });
 
   autoUpdater.on("update-available", (info) => {
     console.log("[updater] update available:", info.version);
+    currentVersion = info.version;
     window.webContents.send("desktop:update-state", {
       state: "downloading",
-      version: info.version,
+      version: currentVersion,
+      percent: 0,
     });
   });
 
@@ -54,7 +60,9 @@ export function wireAutoUpdate(window: BrowserWindow): void {
   autoUpdater.on("download-progress", (p) => {
     window.webContents.send("desktop:update-state", {
       state: "downloading",
+      version: currentVersion,
       percent: Math.round(p.percent),
+      bytesPerSecond: Math.round(p.bytesPerSecond),
     });
   });
 
