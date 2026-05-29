@@ -19,6 +19,12 @@ type UpdateState =
   | { state: "downloading"; version?: string; percent?: number }
   | { state: "ready"; version: string; releaseNotes: string };
 
+type AppMeta = {
+  appVersion: string;
+  sourceSha: string;
+  isPackaged: boolean;
+};
+
 contextBridge.exposeInMainWorld("desktop", {
   onUpdateState(callback: (state: UpdateState) => void): () => void {
     const handler = (_e: unknown, state: UpdateState) => callback(state);
@@ -28,5 +34,11 @@ contextBridge.exposeInMainWorld("desktop", {
   },
   installUpdate(): Promise<void> {
     return ipcRenderer.invoke("desktop:install-update");
+  },
+  getAppMeta(): Promise<AppMeta> {
+    return ipcRenderer.invoke("desktop:get-app-meta");
+  },
+  checkForUpdates(): Promise<void> {
+    return ipcRenderer.invoke("desktop:check-for-updates");
   },
 });

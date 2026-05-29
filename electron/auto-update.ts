@@ -84,3 +84,11 @@ export function installPendingUpdate(): void {
   // false, true = isSilent, isForceRunAfter — relaunch into the new build
   autoUpdater.quitAndInstall(false, true);
 }
+
+/** Manual check (Settings → About → "Check for updates" button). */
+export function checkForUpdatesNow(): Promise<void> {
+  if (!app.isPackaged) return Promise.resolve();
+  return autoUpdater.checkForUpdates().then(() => undefined).catch((e) => {
+    console.error("[updater] manual check failed:", e);
+  });
+}

@@ -15,7 +15,8 @@ import { app, BrowserWindow, protocol, net, session, ipcMain } from "electron";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { createMainWindow } from "./window";
-import { wireAutoUpdate, installPendingUpdate } from "./auto-update";
+import { wireAutoUpdate, installPendingUpdate, checkForUpdatesNow } from "./auto-update";
+import { readFileSync } from "node:fs";
 
 // Register the custom `app://` scheme as privileged + standard BEFORE app.ready
 // fires. This is what lets the renderer follow `app:///dashboard/` style links
@@ -188,6 +189,25 @@ app.whenReady().then(() => {
   ipcMain.handle("desktop:install-update", () => {
     installPendingUpdate();
   });
+
+  // IPC: Settings → About reads version + bundled source SHA
+  ipcMain.handle("desktop:get-app-meta", () => {
+    let sourceSha = "";
+    try {
+      sourceSha = readFileSync(path.join(WEB_ROOT, ".source-sha"), "utf8").trim();
+    } catch {
+      // No .source-sha (dev build via npm run dev that didn't run build-web.sh)
+      sourceSha = "dev";
+    }
+    return {
+      appVersion: app.getVersion(),
+      sourceSha,
+      isPackaged: app.isPackaged,
+    };
+  });
+
+  // IPC: Settings → "Check for updates" button
+  ipcMain.handle("desktop:check-for-updates", () => checkForUpdatesNow());
 
   // electron-updater — only runs against the GitHub Releases feed when the
   // app is a packaged binary. No-op in dev. Quiet on errors.
