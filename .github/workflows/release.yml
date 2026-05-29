@@ -110,6 +110,8 @@ jobs:
           path: |
             desktop/release/*.dmg
             desktop/release/*.dmg.blockmap
+            desktop/release/*.zip
+            desktop/release/*.zip.blockmap
             desktop/release/latest-mac.yml
           if-no-files-found: error
 
