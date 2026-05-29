@@ -1,6 +1,6 @@
 {
   "name": "fa_client_portal_desktop",
-  "version": "0.0.2-rc.3",
+  "version": "0.0.2-rc.4",
   "private": true,
   "description": "ACE Wealth Advisory — desktop wrapper for fa_client_portal. Electron-based, ships the Next.js UI inside a native window so the advisor's book never leaves the device.",
   "main": "dist/electron/main.js",
@@ -24,13 +24,15 @@
   ],
   "author": "WaffleSub",
   "license": "UNLICENSED",
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
-    "electron-updater": "^6.3.9",
     "typescript": "^5.7.2"
   }
 }
