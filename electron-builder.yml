@@ -1,0 +1,69 @@
+# electron-builder.yml — packaging config for fa_client_portal_desktop.
+#
+# MVP tier: unsigned. macOS users right-click → Open the first time;
+# Windows users click 'More info → Run anyway' on SmartScreen warning.
+# Phase D6 (optional, $99/yr Apple Developer Program) adds notarization
+# to remove the macOS Gatekeeper friction.
+
+appId: com.acewealth.client-portal
+productName: ACE Wealth Advisory
+copyright: © 2026 ACE Wealth Advisory
+
+directories:
+  output: release
+  buildResources: build
+
+# Files to include in the asar bundle.
+files:
+  - dist/electron/**/*
+  - web/out/**/*
+  - placeholder.html
+  - package.json
+  - "!**/*.map"
+  - "!**/node_modules/**/{CHANGELOG.md,README.md,readme.md,changelog.md}"
+  - "!**/node_modules/**/{test,__tests__,tests,powered-test,example,examples}/**"
+  - "!**/node_modules/**/*.d.ts"
+
+# Asar = single archive; signed in Phase D6.
+asar: true
+
+mac:
+  category: public.app-category.finance
+  icon: build/icon.png
+  hardenedRuntime: false # Phase D6 flips this on with Apple signing
+  gatekeeperAssess: false
+  target:
+    - target: dmg
+      arch: [universal] # one fat binary covers arm64 + x64
+
+dmg:
+  title: "${productName} ${version}"
+  iconSize: 96
+  contents:
+    - x: 130
+      y: 220
+      type: file
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+
+nsis:
+  oneClick: false # show install wizard (lets user pick folder)
+  perMachine: false # per-user install — no admin prompt
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+
+# GitHub Releases as the update channel (wired in Phase D5)
+publish:
+  provider: github
+  owner: WaffleSub
+  repo: fa_client_portal_desktop
+  private: true
