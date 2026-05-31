@@ -9,3 +9,8 @@ web/out/
 
 # electron-builder caches
 .cache/
+
+# Playwright test outputs
+e2e-output/
+test-results/
+playwright-report/
